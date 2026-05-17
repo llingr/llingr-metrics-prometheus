@@ -1,0 +1,87 @@
+# HELP llingr_engine_current_offset Current offset being processed per partition
+# TYPE llingr_engine_current_offset gauge
+llingr_engine_current_offset{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_dead_letter_duration_seconds Time spent writing to dead letter queue
+# TYPE llingr_engine_dead_letter_duration_seconds histogram
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.001"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.002"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.004"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.008"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.016"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.032"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.064"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.128"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.256"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.512"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="1.024"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="2.048"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="4.096"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="8.192"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="16.384"}
+llingr_engine_dead_letter_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="+Inf"}
+llingr_engine_dead_letter_duration_seconds_sum{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_engine_dead_letter_duration_seconds_count{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_dead_lettered_total Total number of messages sent to dead letter queue
+# TYPE llingr_engine_dead_lettered_total counter
+llingr_engine_dead_lettered_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_duplicate_total Total number of duplicate messages detected
+# TYPE llingr_engine_duplicate_total counter
+llingr_engine_duplicate_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_errored_total Total number of messages that resulted in processing errors
+# TYPE llingr_engine_errored_total counter
+llingr_engine_errored_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_panicked_total Total number of messages where processing panicked
+# TYPE llingr_engine_panicked_total counter
+llingr_engine_panicked_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_process_duration_seconds Time spent processing messages
+# TYPE llingr_engine_process_duration_seconds histogram
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.001"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.002"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.004"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.008"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.016"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.032"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.064"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.128"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.256"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.512"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="1.024"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="2.048"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="4.096"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="8.192"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="16.384"}
+llingr_engine_process_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="+Inf"}
+llingr_engine_process_duration_seconds_sum{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_engine_process_duration_seconds_count{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_processed_total Total number of messages processed
+# TYPE llingr_engine_processed_total counter
+llingr_engine_processed_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_queue_depth Current queue depth for buffering implementations
+# TYPE llingr_engine_queue_depth gauge
+llingr_engine_queue_depth{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_queue_wait_duration_seconds Time messages spent waiting in queue before processing
+# TYPE llingr_engine_queue_wait_duration_seconds histogram
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0001"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0002"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0004"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0008"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0016"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0032"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0064"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0128"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0256"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.0512"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.1024"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.2048"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.4096"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="0.8192"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="1.6384"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="3.2768"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="6.5536"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="13.1072"}
+llingr_engine_queue_wait_duration_seconds_bucket{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders",le="+Inf"}
+llingr_engine_queue_wait_duration_seconds_sum{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_engine_queue_wait_duration_seconds_count{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+# HELP llingr_engine_used_overflow_total Total messages that used guard channel overflow during worker acquisition
+# TYPE llingr_engine_used_overflow_total counter
+llingr_engine_used_overflow_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
