@@ -1,30 +1,30 @@
 # HELP llingr_bandwidth_broker_count Number of brokers in the cluster at last collection
 # TYPE llingr_bandwidth_broker_count gauge
-llingr_bandwidth_broker_count{application="test-app",consumer_group="order-processor",team="platform",topic="orders"}
+llingr_bandwidth_broker_count{consumer_group="order-processor",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_broker_info Broker topology at last collection (info metric, always 1.0)
 # TYPE llingr_bandwidth_broker_info gauge
-llingr_bandwidth_broker_info{application="test-app",broker_host="broker-1",broker_id="1",broker_port="9092",broker_rack="az-a",consumer_group="order-processor",team="platform",topic="orders"}
+llingr_bandwidth_broker_info{broker_host="broker-1",broker_id="1",broker_port="9092",broker_rack="az-a",consumer_group="order-processor",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_compressed_bytes_total Total compressed (wire) bytes received; zero when compression visibility is unavailable
 # TYPE llingr_bandwidth_compressed_bytes_total counter
-llingr_bandwidth_compressed_bytes_total{application="test-app",compression="snappy",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_bandwidth_compressed_bytes_total{compression="snappy",consumer_group="order-processor",partition="0",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_last_collection_timestamp_seconds Unix timestamp of the most recent bandwidth collection
 # TYPE llingr_bandwidth_last_collection_timestamp_seconds gauge
-llingr_bandwidth_last_collection_timestamp_seconds{application="test-app",consumer_group="order-processor",team="platform",topic="orders"}
+llingr_bandwidth_last_collection_timestamp_seconds{consumer_group="order-processor",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_partition_count Number of assigned partitions at last collection
 # TYPE llingr_bandwidth_partition_count gauge
-llingr_bandwidth_partition_count{application="test-app",consumer_group="order-processor",team="platform",topic="orders"}
+llingr_bandwidth_partition_count{consumer_group="order-processor",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_received_bytes_total Total bytes received by llingr consumer instances
 # TYPE llingr_bandwidth_received_bytes_total counter
-llingr_bandwidth_received_bytes_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_bandwidth_received_bytes_total{consumer_group="order-processor",partition="0",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_received_messages_total Total messages received by llingr consumer instances
 # TYPE llingr_bandwidth_received_messages_total counter
-llingr_bandwidth_received_messages_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_bandwidth_received_messages_total{consumer_group="order-processor",partition="0",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_stats_interval_seconds Configured collection cadence in seconds
 # TYPE llingr_bandwidth_stats_interval_seconds gauge
-llingr_bandwidth_stats_interval_seconds{application="test-app",consumer_group="order-processor",team="platform",topic="orders"}
+llingr_bandwidth_stats_interval_seconds{consumer_group="order-processor",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_transmitted_bytes_total Total bytes transmitted by llingr consumer instances
 # TYPE llingr_bandwidth_transmitted_bytes_total counter
-llingr_bandwidth_transmitted_bytes_total{application="test-app",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_bandwidth_transmitted_bytes_total{consumer_group="order-processor",partition="0",service="test-app",team="platform",topic="orders"}
 # HELP llingr_bandwidth_uncompressed_bytes_total Total uncompressed (decompressed) bytes received; zero when compression visibility is unavailable
 # TYPE llingr_bandwidth_uncompressed_bytes_total counter
-llingr_bandwidth_uncompressed_bytes_total{application="test-app",compression="snappy",consumer_group="order-processor",partition="0",team="platform",topic="orders"}
+llingr_bandwidth_uncompressed_bytes_total{compression="snappy",consumer_group="order-processor",partition="0",service="test-app",team="platform",topic="orders"}

@@ -3,7 +3,7 @@ module github.com/llingr/llingr-metrics-prometheus
 go 1.24
 
 require (
-	github.com/llingr/llingr-nexus v0.9.0
+	github.com/llingr/llingr-nexus v0.10.0
 	github.com/prometheus/client_golang v1.23.2
 )
 

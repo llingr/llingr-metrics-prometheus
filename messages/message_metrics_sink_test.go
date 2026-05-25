@@ -17,16 +17,16 @@ import (
 )
 
 var testCtx = nexus.SinkContext{
-	TopicName:       "orders",
-	ConsumerGroup:   "order-processor",
-	ApplicationName: "test-app",
+	TopicName:     "orders",
+	ConsumerGroup: "order-processor",
+	Service:       &nexus.Service{Name: "test-app"},
 }
 
 func testLabels(partition string) prometheus.Labels {
 	return prometheus.Labels{
 		"topic":          testCtx.TopicName,
 		"consumer_group": testCtx.ConsumerGroup,
-		"application":    testCtx.ApplicationName,
+		"service":        testCtx.Service.Name,
 		"team":           "",
 		"partition":      partition,
 	}
@@ -36,8 +36,7 @@ func testLabels(partition string) prometheus.Labels {
 
 func TestNew_RegistersAllMetrics(t *testing.T) {
 	s := New()
-	families, err := s.Registry().Gather()
-	if err != nil {
+	if _, err := s.Registry().Gather(); err != nil {
 		t.Fatalf("gather error: %v", err)
 	}
 
@@ -45,7 +44,7 @@ func TestNew_RegistersAllMetrics(t *testing.T) {
 	sink := s.MetricsSink()
 	_ = sink(testCtx, nexus.Metrics{Partition: 0})
 
-	families, err = s.Registry().Gather()
+	families, err := s.Registry().Gather()
 	if err != nil {
 		t.Fatalf("gather error: %v", err)
 	}
@@ -387,9 +386,9 @@ func TestMetricsSink_LabelsFromSinkContext(t *testing.T) {
 	sink := s.MetricsSink()
 
 	ctx := nexus.SinkContext{
-		TopicName:       "payments",
-		ConsumerGroup:   "payment-group",
-		ApplicationName: "billing-service",
+		TopicName:     "payments",
+		ConsumerGroup: "payment-group",
+		Service:       &nexus.Service{Name: "billing-service"},
 	}
 
 	_ = sink(ctx, nexus.Metrics{Partition: 11})
@@ -397,7 +396,7 @@ func TestMetricsSink_LabelsFromSinkContext(t *testing.T) {
 	labels := prometheus.Labels{
 		"topic":          "payments",
 		"consumer_group": "payment-group",
-		"application":    "billing-service",
+		"service":        "billing-service",
 		"team":           "",
 		"partition":      "11",
 	}
@@ -408,7 +407,7 @@ func TestMetricsSink_LabelsFromSinkContext(t *testing.T) {
 	}
 }
 
-func TestMetricsSink_EmptyApplicationName(t *testing.T) {
+func TestMetricsSink_NoService(t *testing.T) {
 	s := New()
 	sink := s.MetricsSink()
 
@@ -422,14 +421,14 @@ func TestMetricsSink_EmptyApplicationName(t *testing.T) {
 	labels := prometheus.Labels{
 		"topic":          "events",
 		"consumer_group": "cg1",
-		"application":    "",
+		"service":        "",
 		"team":           "",
 		"partition":      "0",
 	}
 
 	val := testutil.ToFloat64(s.messagesProcessed.With(labels))
 	if val != 1 {
-		t.Errorf("processed with empty application: got %v, want 1", val)
+		t.Errorf("processed with nil Service: got %v, want 1", val)
 	}
 }
 
@@ -463,24 +462,22 @@ func TestMetricsSink_ReturnsNil(t *testing.T) {
 
 // --- Team label propagation ---
 //
-// All other tests in this file use testCtx without a Team set, exercising the
-// "team optional, not configured" path (team label = ""). The tests below
-// verify that when a Team IS set via WithTeam(), the team name flows through
-// to the prometheus label.
+// All other tests in this file use testCtx with a Service that has only a
+// Name (team empty). The tests below verify that when Service.Team is also
+// populated, the team name flows through to the prometheus label.
 
 var testCtxWithTeam = nexus.SinkContext{
-	TopicName:       "orders",
-	ConsumerGroup:   "order-processor",
-	ApplicationName: "test-app",
-	Team:            &nexus.Team{Name: "platform-eng"},
+	TopicName:     "orders",
+	ConsumerGroup: "order-processor",
+	Service:       &nexus.Service{Name: "test-app", Team: "platform-eng"},
 }
 
 func testLabelsWithTeam(partition string) prometheus.Labels {
 	return prometheus.Labels{
 		"topic":          testCtxWithTeam.TopicName,
 		"consumer_group": testCtxWithTeam.ConsumerGroup,
-		"application":    testCtxWithTeam.ApplicationName,
-		"team":           testCtxWithTeam.Team.Name,
+		"service":        testCtxWithTeam.Service.Name,
+		"team":           testCtxWithTeam.Service.Team,
 		"partition":      partition,
 	}
 }
@@ -520,33 +517,39 @@ func TestMetricsSink_TeamlessAndTeamedAreDistinctSeries(t *testing.T) {
 	}
 }
 
-func TestMetricsSink_NilTeamSafe(t *testing.T) {
-	// Defensive: explicitly nil Team field should be handled identically to
-	// an unset field, producing an empty team label rather than panicking.
+func TestMetricsSink_NilServiceSafe(t *testing.T) {
+	// Defensive: explicitly nil Service field should be handled identically to
+	// an unset field, producing empty service/team labels rather than panicking
 	s := New()
 	sink := s.MetricsSink()
 
 	ctxWithExplicitNil := nexus.SinkContext{
-		TopicName:       "orders",
-		ConsumerGroup:   "order-processor",
-		ApplicationName: "test-app",
-		Team:            nil,
+		TopicName:     "orders",
+		ConsumerGroup: "order-processor",
+		Service:       nil,
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			t.Fatalf("nil Team caused panic: %v", r)
+			t.Fatalf("nil Service caused panic: %v", r)
 		}
 	}()
 
 	if err := sink(ctxWithExplicitNil, nexus.Metrics{Partition: 0}); err != nil {
-		t.Errorf("MetricsSink with nil Team returned error: %v", err)
+		t.Errorf("MetricsSink with nil Service returned error: %v", err)
 	}
 
-	// resulting series should match testLabels (team="")
-	val := testutil.ToFloat64(s.messagesProcessed.With(testLabels("0")))
+	// resulting series has empty service and team labels
+	labels := prometheus.Labels{
+		"topic":          "orders",
+		"consumer_group": "order-processor",
+		"service":        "",
+		"team":           "",
+		"partition":      "0",
+	}
+	val := testutil.ToFloat64(s.messagesProcessed.With(labels))
 	if val != 1 {
-		t.Errorf("nil-Team count: got %v, want 1", val)
+		t.Errorf("nil-Service count: got %v, want 1", val)
 	}
 }
 
