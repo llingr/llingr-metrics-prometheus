@@ -22,9 +22,9 @@ import (
 
 // Sink collects llingr bandwidth telemetry and exposes it for Prometheus scraping.
 type Sink struct {
-	registry        *prometheus.Registry
-	applicationName string // captured from BandwidthOptions; consumed by the BandwidthMetricsSink closure
-	teamName        string // fallback team label when metrics.Team is nil
+	registry    *prometheus.Registry
+	serviceName string // fallback service label when metrics.Service is nil
+	teamName    string // fallback team label when metrics.Service is nil or has empty Team
 
 	// per-partition counters
 	receivedBytes      *prometheus.CounterVec
@@ -48,15 +48,15 @@ type Sink struct {
 func New(opts ...Option) *Sink {
 	o := processOptions(opts...)
 	s := &Sink{
-		registry:        prometheus.NewRegistry(),
-		applicationName: o.applicationName,
-		teamName:        o.teamName,
+		registry:    prometheus.NewRegistry(),
+		serviceName: o.serviceName,
+		teamName:    o.teamName,
 	}
 
-	partitionLabels := []string{"topic", "consumer_group", "application", "team", "partition"}
-	compressionLabels := []string{"topic", "consumer_group", "application", "team", "partition", "compression"}
-	topologyLabels := []string{"topic", "consumer_group", "application", "team"}
-	brokerInfoLabels := []string{"topic", "consumer_group", "application", "team", "broker_id", "broker_host", "broker_port", "broker_rack"}
+	partitionLabels := []string{"topic", "consumer_group", "service", "team", "partition"}
+	compressionLabels := []string{"topic", "consumer_group", "service", "team", "partition", "compression"}
+	topologyLabels := []string{"topic", "consumer_group", "service", "team"}
+	brokerInfoLabels := []string{"topic", "consumer_group", "service", "team", "broker_id", "broker_host", "broker_port", "broker_rack"}
 
 	s.receivedBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -174,14 +174,22 @@ func New(opts ...Option) *Sink {
 	return s
 }
 
-// teamName returns the team name from a *nexus.Team, or "" if nil.
-// Empty string is a valid Prometheus label value and lets dashboards filter
-// untagged consumers cleanly.
-func teamName(team *nexus.Team) string {
-	if team == nil {
-		return ""
+// serviceLabels resolves the service and team labels from a per-packet
+// Service (winning when set) and the sink-level fallbacks. Empty strings
+// are valid Prometheus label values and let dashboards filter untagged
+// consumers cleanly
+func (s *Sink) serviceLabels(service *nexus.Service) (svc, team string) {
+	if service != nil {
+		svc = service.Name
+		team = service.Team
 	}
-	return team.Name
+	if svc == "" {
+		svc = s.serviceName
+	}
+	if team == "" {
+		team = s.teamName
+	}
+	return svc, team
 }
 
 // BandwidthMetricsSink returns a nexus.BandwidthMetricsSink function that
@@ -193,18 +201,15 @@ func teamName(team *nexus.Team) string {
 func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 	return func(topicName string, metrics nexus.BandwidthMetrics) error {
 		group := metrics.ConsumerGroup
-		app := s.applicationName
-		// per-packet Team (set by the demux bandwidth aggregator) wins;
-		// fall back to the sink-level WithTeamName option when unset.
-		team := teamName(metrics.Team)
-		if team == "" {
-			team = s.teamName
-		}
+		// per-packet Service (set by the demux bandwidth aggregator) wins;
+		// fall back to the sink-level WithServiceName / WithTeamName options
+		// when the per-packet value is unset
+		svc, team := s.serviceLabels(metrics.Service)
 
 		topologyLabels := prometheus.Labels{
 			"topic":          topicName,
 			"consumer_group": group,
-			"application":    app,
+			"service":        svc,
 			"team":           team,
 		}
 
@@ -222,7 +227,7 @@ func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 			s.brokerInfo.With(prometheus.Labels{
 				"topic":          topicName,
 				"consumer_group": group,
-				"application":    app,
+				"service":        svc,
 				"team":           team,
 				"broker_id":      b.ID,
 				"broker_host":    b.Host,
@@ -237,7 +242,7 @@ func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 			labels := prometheus.Labels{
 				"topic":          topicName,
 				"consumer_group": group,
-				"application":    app,
+				"service":        svc,
 				"team":           team,
 				"partition":      partition,
 			}
@@ -259,7 +264,7 @@ func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 				compLabels := prometheus.Labels{
 					"topic":          topicName,
 					"consumer_group": group,
-					"application":    app,
+					"service":        svc,
 					"team":           team,
 					"partition":      partition,
 					"compression":    compression,
@@ -274,7 +279,7 @@ func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 				s.uncompressedBytes.With(prometheus.Labels{
 					"topic":          topicName,
 					"consumer_group": group,
-					"application":    app,
+					"service":        svc,
 					"team":           team,
 					"partition":      partition,
 					"compression":    compression,

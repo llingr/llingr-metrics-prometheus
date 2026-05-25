@@ -33,10 +33,9 @@ func TestMetricsContract_Golden(t *testing.T) {
 	// all three histograms (process duration, dead letter duration, queue wait)
 	fixedReadTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	ctx := nexus.SinkContext{
-		TopicName:       "orders",
-		ConsumerGroup:   "order-processor",
-		ApplicationName: "test-app",
-		Team:            &nexus.Team{Name: "platform"},
+		TopicName:     "orders",
+		ConsumerGroup: "order-processor",
+		Service:       &nexus.Service{Name: "test-app", Team: "platform"},
 	}
 	m := nexus.Metrics{
 		Partition:               0,

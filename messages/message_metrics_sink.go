@@ -44,7 +44,7 @@ func New(opts ...Option) *Sink {
 	o := processOptions(opts...)
 	s := &Sink{registry: prometheus.NewRegistry()}
 
-	labels := []string{"topic", "consumer_group", "application", "team", "partition"}
+	labels := []string{"topic", "consumer_group", "service", "team", "partition"}
 
 	s.messagesProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -176,25 +176,26 @@ func New(opts ...Option) *Sink {
 	return s
 }
 
-// teamName returns the team name from a SinkContext, or "" if no team was
-// configured via WithTeam(). Empty string is a valid Prometheus label value
-// and lets dashboards filter out untagged consumers cleanly.
-func teamName(team *nexus.Team) string {
-	if team == nil {
-		return ""
+// serviceLabels resolves the service and team labels from SinkContext.Service.
+// Empty strings are valid Prometheus label values and let dashboards filter
+// untagged consumers cleanly
+func serviceLabels(service *nexus.Service) (svc, team string) {
+	if service == nil {
+		return "", ""
 	}
-	return team.Name
+	return service.Name, service.Team
 }
 
 // MetricsSink returns a nexus.MetricsSink function that records metrics to Prometheus.
 func (s *Sink) MetricsSink() nexus.MetricsSink {
 	return func(ctx nexus.SinkContext, metrics nexus.Metrics) error {
 		partition := strconv.FormatInt(int64(metrics.Partition), 10)
+		svc, team := serviceLabels(ctx.Service)
 		labels := prometheus.Labels{
 			"topic":          ctx.TopicName,
 			"consumer_group": ctx.ConsumerGroup,
-			"application":    ctx.ApplicationName,
-			"team":           teamName(ctx.Team),
+			"service":        svc,
+			"team":           team,
 			"partition":      partition,
 		}
 

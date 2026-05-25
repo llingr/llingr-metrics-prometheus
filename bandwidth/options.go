@@ -11,28 +11,29 @@ const (
 // BandwidthOptions holds construction-time configuration for a Sink.
 // Fields are unexported; configure via the With* Option constructors.
 type BandwidthOptions struct {
-	applicationName string
-	teamName        string
-	namespace       string
-	subsystem       string
+	serviceName string
+	teamName    string
+	namespace   string
+	subsystem   string
 }
 
 // Option configures BandwidthOptions.
 type Option func(*BandwidthOptions)
 
-// WithApplicationName sets the application label value for all bandwidth
-// metrics emitted by this sink. When empty, the label is present but blank.
-func WithApplicationName(name string) Option {
+// WithServiceName sets a default service label value for bandwidth metrics.
+// When the inbound BandwidthMetrics packet carries a non-nil Service, that
+// value wins; this option provides a fallback when the per-packet Service
+// is unset.
+func WithServiceName(name string) Option {
 	return func(o *BandwidthOptions) {
-		o.applicationName = name
+		o.serviceName = name
 	}
 }
 
 // WithTeamName sets a default team label value for bandwidth metrics. When
-// the inbound BandwidthMetrics packet carries a non-nil Team (as the demux
-// bandwidth aggregator stamps it after WithTeam), that value wins; this
-// option provides a fallback for cases where the aggregator hasn't been
-// configured with a team.
+// the inbound BandwidthMetrics packet carries a non-nil Service with a
+// non-empty Team, that value wins; this option provides a fallback when
+// the per-packet team is unset.
 func WithTeamName(name string) Option {
 	return func(o *BandwidthOptions) {
 		o.teamName = name

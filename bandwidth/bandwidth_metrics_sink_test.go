@@ -59,14 +59,14 @@ func TestBandwidthMetricsSink_RecordsBytesAndMessages(t *testing.T) {
 
 	// verify received bytes
 	receivedBytes := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "", "partition": "0",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "", "partition": "0",
 	}))
 	if receivedBytes != 1024000 {
 		t.Errorf("received bytes partition 0: got %v, want 1024000", receivedBytes)
 	}
 
 	receivedBytesP1 := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "", "partition": "1",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "", "partition": "1",
 	}))
 	if receivedBytesP1 != 2048000 {
 		t.Errorf("received bytes partition 1: got %v, want 2048000", receivedBytesP1)
@@ -74,7 +74,7 @@ func TestBandwidthMetricsSink_RecordsBytesAndMessages(t *testing.T) {
 
 	// verify message count
 	msgCount := testutil.ToFloat64(s.receivedMessages.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "", "partition": "0",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "", "partition": "0",
 	}))
 	if msgCount != 1000 {
 		t.Errorf("received messages partition 0: got %v, want 1000", msgCount)
@@ -82,7 +82,7 @@ func TestBandwidthMetricsSink_RecordsBytesAndMessages(t *testing.T) {
 
 	// verify compressed bytes with compression label
 	compBytes := testutil.ToFloat64(s.compressedBytes.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "", "partition": "0", "compression": "snappy",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "", "partition": "0", "compression": "snappy",
 	}))
 	if compBytes != 768000 {
 		t.Errorf("compressed bytes: got %v, want 768000", compBytes)
@@ -90,21 +90,21 @@ func TestBandwidthMetricsSink_RecordsBytesAndMessages(t *testing.T) {
 
 	// verify topology gauges
 	brokers := testutil.ToFloat64(s.brokerCount.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "",
 	}))
 	if brokers != 3 {
 		t.Errorf("broker count: got %v, want 3", brokers)
 	}
 
 	partitions := testutil.ToFloat64(s.partitionCount.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "",
 	}))
 	if partitions != 2 {
 		t.Errorf("partition count: got %v, want 2", partitions)
 	}
 
 	interval := testutil.ToFloat64(s.statsInterval.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "", "team": "",
+		"topic": "orders", "consumer_group": "order-processor", "service": "", "team": "",
 	}))
 	if interval != 60 {
 		t.Errorf("stats interval: got %v, want 60", interval)
@@ -129,14 +129,14 @@ func TestBandwidthMetricsSink_Accumulates(t *testing.T) {
 	_ = sink("topic1", packet)
 
 	total := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0",
 	}))
 	if total != 2000 {
 		t.Errorf("accumulated received bytes: got %v, want 2000", total)
 	}
 
 	totalMsgs := testutil.ToFloat64(s.receivedMessages.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0",
 	}))
 	if totalMsgs != 20 {
 		t.Errorf("accumulated messages: got %v, want 20", totalMsgs)
@@ -166,7 +166,7 @@ func TestBandwidthMetricsSink_RecordsUncompressedBytes(t *testing.T) {
 	}
 
 	uncompBytes := testutil.ToFloat64(s.uncompressedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0", "compression": "snappy",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0", "compression": "snappy",
 	}))
 	if uncompBytes != 1024000 {
 		t.Errorf("uncompressed bytes: got %v, want 1024000", uncompBytes)
@@ -213,14 +213,14 @@ func TestBandwidthMetricsSink_UnknownCompressionLabel(t *testing.T) {
 	_ = sink("topic1", packet)
 
 	compBytes := testutil.ToFloat64(s.compressedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0", "compression": "unknown",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0", "compression": "unknown",
 	}))
 	if compBytes != 500 {
 		t.Errorf("compressed bytes with unknown compression: got %v, want 500", compBytes)
 	}
 
 	uncompBytes := testutil.ToFloat64(s.uncompressedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0", "compression": "unknown",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0", "compression": "unknown",
 	}))
 	if uncompBytes != 1000 {
 		t.Errorf("uncompressed bytes with unknown compression: got %v, want 1000", uncompBytes)
@@ -289,8 +289,8 @@ func TestBandwidthMetricsSink_RegisterCollectorsTo(t *testing.T) {
 	}
 }
 
-func TestBandwidthMetricsSink_WithApplicationName(t *testing.T) {
-	s := New(WithApplicationName("order-service"))
+func TestBandwidthMetricsSink_WithServiceName(t *testing.T) {
+	s := New(WithServiceName("order-service"))
 	sink := s.BandwidthMetricsSink()
 
 	metrics := nexus.BandwidthMetrics{
@@ -312,7 +312,7 @@ func TestBandwidthMetricsSink_WithApplicationName(t *testing.T) {
 
 	// verify application label is set on per-partition counter
 	receivedBytes := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "order-service", "team": "", "partition": "0",
+		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "", "partition": "0",
 	}))
 	if receivedBytes != 1024 {
 		t.Errorf("received bytes with application label: got %v, want 1024", receivedBytes)
@@ -320,7 +320,7 @@ func TestBandwidthMetricsSink_WithApplicationName(t *testing.T) {
 
 	// verify application label is set on topology gauge
 	brokerCount := testutil.ToFloat64(s.brokerCount.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "order-service", "team": "",
+		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "",
 	}))
 	if brokerCount != 1 {
 		t.Errorf("broker count with application label: got %v, want 1", brokerCount)
@@ -328,7 +328,7 @@ func TestBandwidthMetricsSink_WithApplicationName(t *testing.T) {
 
 	// verify application label is set on broker_info gauge
 	info := testutil.ToFloat64(s.brokerInfo.With(prometheus.Labels{
-		"topic": "orders", "consumer_group": "order-processor", "application": "order-service", "team": "",
+		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "",
 		"broker_id": "1", "broker_host": "broker-1", "broker_port": "9092", "broker_rack": "eu-west-1a",
 	}))
 	if info != 1.0 {
@@ -337,7 +337,7 @@ func TestBandwidthMetricsSink_WithApplicationName(t *testing.T) {
 }
 
 func TestBandwidthMetricsSink_BrokerInfo(t *testing.T) {
-	s := New(WithApplicationName("my-app"))
+	s := New(WithServiceName("my-app"))
 	sink := s.BandwidthMetricsSink()
 
 	metrics := nexus.BandwidthMetrics{
@@ -368,7 +368,7 @@ func TestBandwidthMetricsSink_BrokerInfo(t *testing.T) {
 		val := testutil.ToFloat64(s.brokerInfo.With(prometheus.Labels{
 			"topic":          "events",
 			"consumer_group": "cg1",
-			"application":    "my-app",
+			"service":    "my-app",
 			"team":           "",
 			"broker_id":      tc.id,
 			"broker_host":    tc.host,
@@ -426,7 +426,7 @@ func TestBandwidthMetricsSink_BrokerInfoUpdatesOnTopologyChange(t *testing.T) {
 
 	// new broker should be visible
 	val := testutil.ToFloat64(s.brokerInfo.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "",
 		"broker_id": "3", "broker_host": "broker-3", "broker_port": "9092", "broker_rack": "az-c",
 	}))
 	if val != 1.0 {
@@ -435,7 +435,7 @@ func TestBandwidthMetricsSink_BrokerInfoUpdatesOnTopologyChange(t *testing.T) {
 
 	// broker-2 with new host should also be visible
 	val2 := testutil.ToFloat64(s.brokerInfo.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "",
 		"broker_id": "2", "broker_host": "broker-2-new", "broker_port": "9092", "broker_rack": "az-b",
 	}))
 	if val2 != 1.0 {
@@ -451,11 +451,11 @@ func TestBandwidthMetricsSink_BrokerInfoUpdatesOnTopologyChange(t *testing.T) {
 
 // --- Team label propagation ---
 //
-// All other tests in this file pass BandwidthMetrics without Team set,
-// exercising the "team optional, not configured" path (team label = "").
-// The tests below verify that when Team IS set on the inbound packet (which
-// is how llingr-demux's bandwidth aggregator stamps it after WithTeam()),
-// the team name flows through to the prometheus label.
+// All other tests in this file pass BandwidthMetrics without Service set,
+// exercising the "not configured" path (service/team labels = "").
+// The tests below verify that when Service IS set on the inbound packet
+// (which is how llingr-demux's bandwidth aggregator stamps it after
+// WithService()), the team name flows through to the prometheus label.
 
 func TestBandwidthMetricsSink_TeamLabelPropagated(t *testing.T) {
 	s := New()
@@ -463,7 +463,7 @@ func TestBandwidthMetricsSink_TeamLabelPropagated(t *testing.T) {
 
 	packet := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
-		Team:          &nexus.Team{Name: "platform-eng"},
+		Service:       &nexus.Service{Team: "platform-eng"},
 		Brokers: []nexus.BrokerInfo{
 			{ID: "1", Host: "broker-1", Port: "9092", Rack: "az-a"},
 		},
@@ -475,21 +475,21 @@ func TestBandwidthMetricsSink_TeamLabelPropagated(t *testing.T) {
 	_ = sink("topic1", packet)
 
 	partitionLabels := prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "platform-eng", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform-eng", "partition": "0",
 	}
 	if v := testutil.ToFloat64(s.receivedBytes.With(partitionLabels)); v != 1000 {
 		t.Errorf("received bytes with team label: got %v, want 1000", v)
 	}
 
 	topologyLabels := prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "platform-eng",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform-eng",
 	}
 	if v := testutil.ToFloat64(s.brokerCount.With(topologyLabels)); v != 1 {
 		t.Errorf("broker count with team label: got %v, want 1", v)
 	}
 
 	brokerInfoLabels := prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "platform-eng",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform-eng",
 		"broker_id": "1", "broker_host": "broker-1", "broker_port": "9092", "broker_rack": "az-a",
 	}
 	if v := testutil.ToFloat64(s.brokerInfo.With(brokerInfoLabels)); v != 1.0 {
@@ -509,7 +509,7 @@ func TestBandwidthMetricsSink_TeamlessAndTeamedAreDistinctSeries(t *testing.T) {
 	}
 	teamed := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
-		Team:          &nexus.Team{Name: "platform-eng"},
+		Service:       &nexus.Service{Team: "platform-eng"},
 		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
 	}
 
@@ -518,10 +518,10 @@ func TestBandwidthMetricsSink_TeamlessAndTeamedAreDistinctSeries(t *testing.T) {
 	_ = sink("topic1", teamed)
 
 	teamlessVal := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0",
 	}))
 	teamedVal := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "platform-eng", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform-eng", "partition": "0",
 	}))
 
 	if teamlessVal != 200 {
@@ -533,20 +533,20 @@ func TestBandwidthMetricsSink_TeamlessAndTeamedAreDistinctSeries(t *testing.T) {
 }
 
 func TestBandwidthMetricsSink_WithTeamNameFallback(t *testing.T) {
-	// When the inbound packet has no Team (e.g. aggregator wasn't configured
-	// with demux.WithTeam), the sink-level WithTeamName option fills the gap.
+	// When the inbound packet has no Service (e.g. aggregator wasn't configured
+	// with demux.WithService), the sink-level WithTeamName option fills the gap.
 	s := New(WithTeamName("api"))
 	sink := s.BandwidthMetricsSink()
 
 	packet := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
-		Team:          nil,
+		Service:       nil,
 		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
 	}
 	_ = sink("topic1", packet)
 
 	val := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "api", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "api", "partition": "0",
 	}))
 	if val != 100 {
 		t.Errorf("WithTeamName fallback: got %v, want 100", val)
@@ -554,20 +554,20 @@ func TestBandwidthMetricsSink_WithTeamNameFallback(t *testing.T) {
 }
 
 func TestBandwidthMetricsSink_PerPacketTeamWinsOverOption(t *testing.T) {
-	// When BOTH the packet's Team and the sink's WithTeamName are set, the
-	// per-packet value wins (the aggregator's explicit team is authoritative).
+	// When BOTH the packet's Service.Team and the sink's WithTeamName are set,
+	// the per-packet value wins (the aggregator's explicit team is authoritative).
 	s := New(WithTeamName("fallback"))
 	sink := s.BandwidthMetricsSink()
 
 	packet := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
-		Team:          &nexus.Team{Name: "platform"},
+		Service:       &nexus.Service{Team: "platform"},
 		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
 	}
 	_ = sink("topic1", packet)
 
 	val := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "platform", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform", "partition": "0",
 	}))
 	if val != 100 {
 		t.Errorf("per-packet team should win, got %v want 100", val)
@@ -578,32 +578,32 @@ func TestBandwidthMetricsSink_PerPacketTeamWinsOverOption(t *testing.T) {
 	}
 }
 
-func TestBandwidthMetricsSink_NilTeamSafe(t *testing.T) {
-	// Defensive: explicitly nil Team should be handled identically to an
-	// unset field, producing an empty team label rather than panicking.
+func TestBandwidthMetricsSink_NilServiceSafe(t *testing.T) {
+	// Defensive: explicitly nil Service should be handled identically to an
+	// unset field, producing empty service/team labels rather than panicking.
 	s := New()
 	sink := s.BandwidthMetricsSink()
 
 	defer func() {
 		if r := recover(); r != nil {
-			t.Fatalf("nil Team caused panic: %v", r)
+			t.Fatalf("nil Service caused panic: %v", r)
 		}
 	}()
 
 	packet := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
-		Team:          nil,
+		Service:       nil,
 		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
 	}
 	if err := sink("topic1", packet); err != nil {
-		t.Errorf("nil Team returned error: %v", err)
+		t.Errorf("nil Service returned error: %v", err)
 	}
 
 	val := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "application": "", "team": "", "partition": "0",
+		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "", "partition": "0",
 	}))
 	if val != 100 {
-		t.Errorf("nil-Team count: got %v, want 100", val)
+		t.Errorf("nil-Service count: got %v, want 100", val)
 	}
 }
 
@@ -725,10 +725,10 @@ func TestRegisterHandler_Variants(t *testing.T) {
 			forbidden:      "llingr_bandwidth_",
 		},
 		{
-			name:           "WithApplicationName",
-			opts:           []Option{WithApplicationName("order-svc")},
+			name:           "WithServiceName",
+			opts:           []Option{WithServiceName("order-svc")},
 			expectedMetric: "llingr_bandwidth_received_bytes_total",
-			assertLabel:    `application="order-svc"`,
+			assertLabel:    `service="order-svc"`,
 		},
 	}
 
