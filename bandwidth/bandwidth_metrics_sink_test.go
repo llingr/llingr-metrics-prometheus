@@ -289,14 +289,15 @@ func TestBandwidthMetricsSink_RegisterCollectorsTo(t *testing.T) {
 	}
 }
 
-func TestBandwidthMetricsSink_WithServiceName(t *testing.T) {
-	s := New(WithServiceName("order-service"))
+func TestBandwidthMetricsSink_ServiceLabelPropagated(t *testing.T) {
+	s := New()
 	sink := s.BandwidthMetricsSink()
 
 	metrics := nexus.BandwidthMetrics{
 		Ts:                    time.Now(),
 		StatsIntervalDuration: time.Minute,
 		ConsumerGroup:         "order-processor",
+		Service:               &nexus.Service{Name: "order-service"},
 		Brokers: []nexus.BrokerInfo{
 			{ID: "1", Host: "broker-1", Port: "9092", Rack: "eu-west-1a"},
 		},
@@ -310,38 +311,39 @@ func TestBandwidthMetricsSink_WithServiceName(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// verify application label is set on per-partition counter
+	// verify service label is set on per-partition counter
 	receivedBytes := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
 		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "", "partition": "0",
 	}))
 	if receivedBytes != 1024 {
-		t.Errorf("received bytes with application label: got %v, want 1024", receivedBytes)
+		t.Errorf("received bytes with service label: got %v, want 1024", receivedBytes)
 	}
 
-	// verify application label is set on topology gauge
+	// verify service label is set on topology gauge
 	brokerCount := testutil.ToFloat64(s.brokerCount.With(prometheus.Labels{
 		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "",
 	}))
 	if brokerCount != 1 {
-		t.Errorf("broker count with application label: got %v, want 1", brokerCount)
+		t.Errorf("broker count with service label: got %v, want 1", brokerCount)
 	}
 
-	// verify application label is set on broker_info gauge
+	// verify service label is set on broker_info gauge
 	info := testutil.ToFloat64(s.brokerInfo.With(prometheus.Labels{
 		"topic": "orders", "consumer_group": "order-processor", "service": "order-service", "team": "",
 		"broker_id": "1", "broker_host": "broker-1", "broker_port": "9092", "broker_rack": "eu-west-1a",
 	}))
 	if info != 1.0 {
-		t.Errorf("broker_info with application label: got %v, want 1.0", info)
+		t.Errorf("broker_info with service label: got %v, want 1.0", info)
 	}
 }
 
 func TestBandwidthMetricsSink_BrokerInfo(t *testing.T) {
-	s := New(WithServiceName("my-app"))
+	s := New()
 	sink := s.BandwidthMetricsSink()
 
 	metrics := nexus.BandwidthMetrics{
 		ConsumerGroup: "cg1",
+		Service:       &nexus.Service{Name: "my-app"},
 		Brokers: []nexus.BrokerInfo{
 			{ID: "1", Host: "kafka-0.internal", Port: "9092", Rack: "us-east-1a"},
 			{ID: "2", Host: "kafka-1.internal", Port: "9093", Rack: "us-east-1b"},
@@ -532,52 +534,6 @@ func TestBandwidthMetricsSink_TeamlessAndTeamedAreDistinctSeries(t *testing.T) {
 	}
 }
 
-func TestBandwidthMetricsSink_WithTeamNameFallback(t *testing.T) {
-	// When the inbound packet has no Service (e.g. aggregator wasn't configured
-	// with demux.WithService), the sink-level WithTeamName option fills the gap.
-	s := New(WithTeamName("api"))
-	sink := s.BandwidthMetricsSink()
-
-	packet := nexus.BandwidthMetrics{
-		ConsumerGroup: "cg1",
-		Service:       nil,
-		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
-	}
-	_ = sink("topic1", packet)
-
-	val := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "api", "partition": "0",
-	}))
-	if val != 100 {
-		t.Errorf("WithTeamName fallback: got %v, want 100", val)
-	}
-}
-
-func TestBandwidthMetricsSink_PerPacketTeamWinsOverOption(t *testing.T) {
-	// When BOTH the packet's Service.Team and the sink's WithTeamName are set,
-	// the per-packet value wins (the aggregator's explicit team is authoritative).
-	s := New(WithTeamName("fallback"))
-	sink := s.BandwidthMetricsSink()
-
-	packet := nexus.BandwidthMetrics{
-		ConsumerGroup: "cg1",
-		Service:       &nexus.Service{Team: "platform"},
-		Partitions:    []nexus.PartitionBandwidth{{ID: 0, ReceivedBytes: 100}},
-	}
-	_ = sink("topic1", packet)
-
-	val := testutil.ToFloat64(s.receivedBytes.With(prometheus.Labels{
-		"topic": "topic1", "consumer_group": "cg1", "service": "", "team": "platform", "partition": "0",
-	}))
-	if val != 100 {
-		t.Errorf("per-packet team should win, got %v want 100", val)
-	}
-	// "fallback" label set should NOT exist
-	if c := testutil.CollectAndCount(s.receivedBytes); c != 1 {
-		t.Errorf("expected exactly 1 series, got %d (sink option shouldn't create a second)", c)
-	}
-}
-
 func TestBandwidthMetricsSink_NilServiceSafe(t *testing.T) {
 	// Defensive: explicitly nil Service should be handled identically to an
 	// unset field, producing empty service/team labels rather than panicking.
@@ -693,7 +649,6 @@ func TestRegisterHandler_Variants(t *testing.T) {
 		opts           []Option
 		expectedMetric string
 		forbidden      string // a substring that must NOT appear
-		assertLabel    string // optional: a label=value pair that should appear
 	}{
 		{
 			name:           "default",
@@ -723,12 +678,6 @@ func TestRegisterHandler_Variants(t *testing.T) {
 			opts:           []Option{WithNamespace("acme"), WithSubsystem("network")},
 			expectedMetric: "acme_network_received_bytes_total",
 			forbidden:      "llingr_bandwidth_",
-		},
-		{
-			name:           "WithServiceName",
-			opts:           []Option{WithServiceName("order-svc")},
-			expectedMetric: "llingr_bandwidth_received_bytes_total",
-			assertLabel:    `service="order-svc"`,
 		},
 	}
 
@@ -767,9 +716,6 @@ func TestRegisterHandler_Variants(t *testing.T) {
 			}
 			if tc.forbidden != "" && strings.Contains(bodyStr, tc.forbidden) {
 				t.Errorf("forbidden substring %q leaked into HTTP response", tc.forbidden)
-			}
-			if tc.assertLabel != "" && !strings.Contains(bodyStr, tc.assertLabel) {
-				t.Errorf("expected label %q not in HTTP response", tc.assertLabel)
 			}
 		})
 	}

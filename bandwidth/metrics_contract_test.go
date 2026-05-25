@@ -27,7 +27,7 @@ import (
 // Sample VALUES are stripped before comparison so the contract is independent
 // of the test inputs' magnitudes; only the structural shape is asserted.
 func TestMetricsContract_Golden(t *testing.T) {
-	s := New(WithServiceName("test-app"))
+	s := New()
 
 	// populate every metric in one sink call: per-partition byte counters,
 	// message counts, compression visibility, topology gauges, broker info
@@ -38,7 +38,7 @@ func TestMetricsContract_Golden(t *testing.T) {
 		BandwidthMetricsID:    "test-uuid",
 		TopicName:             "orders",
 		ConsumerGroup:         "order-processor",
-		Service:               &nexus.Service{Team: "platform"},
+		Service:               &nexus.Service{Name: "test-app", Team: "platform"},
 		Brokers: []nexus.BrokerInfo{
 			{ID: "1", Host: "broker-1", Port: "9092", Rack: "az-a"},
 		},

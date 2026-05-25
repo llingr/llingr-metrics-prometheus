@@ -22,9 +22,7 @@ import (
 
 // Sink collects llingr bandwidth telemetry and exposes it for Prometheus scraping.
 type Sink struct {
-	registry    *prometheus.Registry
-	serviceName string // fallback service label when metrics.Service is nil
-	teamName    string // fallback team label when metrics.Service is nil or has empty Team
+	registry *prometheus.Registry
 
 	// per-partition counters
 	receivedBytes      *prometheus.CounterVec
@@ -48,9 +46,7 @@ type Sink struct {
 func New(opts ...Option) *Sink {
 	o := processOptions(opts...)
 	s := &Sink{
-		registry:    prometheus.NewRegistry(),
-		serviceName: o.serviceName,
-		teamName:    o.teamName,
+		registry: prometheus.NewRegistry(),
 	}
 
 	partitionLabels := []string{"topic", "consumer_group", "service", "team", "partition"}
@@ -175,21 +171,13 @@ func New(opts ...Option) *Sink {
 }
 
 // serviceLabels resolves the service and team labels from a per-packet
-// Service (winning when set) and the sink-level fallbacks. Empty strings
-// are valid Prometheus label values and let dashboards filter untagged
-// consumers cleanly
-func (s *Sink) serviceLabels(service *nexus.Service) (svc, team string) {
-	if service != nil {
-		svc = service.Name
-		team = service.Team
+// Service. Empty strings are valid Prometheus label values and let
+// dashboards filter untagged consumers cleanly
+func serviceLabels(service *nexus.Service) (svc, team string) {
+	if service == nil {
+		return "", ""
 	}
-	if svc == "" {
-		svc = s.serviceName
-	}
-	if team == "" {
-		team = s.teamName
-	}
-	return svc, team
+	return service.Name, service.Team
 }
 
 // BandwidthMetricsSink returns a nexus.BandwidthMetricsSink function that
@@ -201,10 +189,7 @@ func (s *Sink) serviceLabels(service *nexus.Service) (svc, team string) {
 func (s *Sink) BandwidthMetricsSink() nexus.BandwidthMetricsSink {
 	return func(topicName string, metrics nexus.BandwidthMetrics) error {
 		group := metrics.ConsumerGroup
-		// per-packet Service (set by the demux bandwidth aggregator) wins;
-		// fall back to the sink-level WithServiceName / WithTeamName options
-		// when the per-packet value is unset
-		svc, team := s.serviceLabels(metrics.Service)
+		svc, team := serviceLabels(metrics.Service)
 
 		topologyLabels := prometheus.Labels{
 			"topic":          topicName,

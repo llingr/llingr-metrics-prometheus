@@ -11,34 +11,12 @@ const (
 // BandwidthOptions holds construction-time configuration for a Sink.
 // Fields are unexported; configure via the With* Option constructors.
 type BandwidthOptions struct {
-	serviceName string
-	teamName    string
-	namespace   string
-	subsystem   string
+	namespace string
+	subsystem string
 }
 
 // Option configures BandwidthOptions.
 type Option func(*BandwidthOptions)
-
-// WithServiceName sets a default service label value for bandwidth metrics.
-// When the inbound BandwidthMetrics packet carries a non-nil Service, that
-// value wins; this option provides a fallback when the per-packet Service
-// is unset.
-func WithServiceName(name string) Option {
-	return func(o *BandwidthOptions) {
-		o.serviceName = name
-	}
-}
-
-// WithTeamName sets a default team label value for bandwidth metrics. When
-// the inbound BandwidthMetrics packet carries a non-nil Service with a
-// non-empty Team, that value wins; this option provides a fallback when
-// the per-packet team is unset.
-func WithTeamName(name string) Option {
-	return func(o *BandwidthOptions) {
-		o.teamName = name
-	}
-}
 
 // WithNamespace overrides the Prometheus metric namespace. Defaults to "llingr".
 func WithNamespace(namespace string) Option {
