@@ -456,8 +456,8 @@ func TestBandwidthMetricsSink_BrokerInfoUpdatesOnTopologyChange(t *testing.T) {
 // All other tests in this file pass BandwidthMetrics without Service set,
 // exercising the "not configured" path (service/team labels = "").
 // The tests below verify that when Service IS set on the inbound packet
-// (which is how llingr-demux's bandwidth aggregator stamps it after
-// WithService()), the team name flows through to the prometheus label.
+// (as the engine's bandwidth aggregator stamps it after WithService()), the
+// team name flows through to the prometheus label.
 
 func TestBandwidthMetricsSink_TeamLabelPropagated(t *testing.T) {
 	s := New()
@@ -699,7 +699,7 @@ func TestRegisterHandler_Variants(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GET failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				t.Errorf("expected status 200, got %d", resp.StatusCode)
@@ -733,7 +733,7 @@ func TestRegisterHandler_CustomPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /metrics: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("expected 404 on unregistered /metrics, got %d", resp.StatusCode)
 	}
@@ -742,7 +742,7 @@ func TestRegisterHandler_CustomPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /metrics/bandwidth: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 on /metrics/bandwidth, got %d", resp.StatusCode)
 	}

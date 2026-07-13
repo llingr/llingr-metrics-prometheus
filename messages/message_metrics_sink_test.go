@@ -674,7 +674,7 @@ func TestRegisterHandler_Variants(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GET failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				t.Errorf("expected status 200, got %d", resp.StatusCode)
@@ -709,7 +709,7 @@ func TestRegisterHandler_CustomPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /metrics: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("expected 404 on unregistered /metrics, got %d", resp.StatusCode)
 	}
@@ -719,7 +719,7 @@ func TestRegisterHandler_CustomPath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GET /custom/path: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 on /custom/path, got %d", resp.StatusCode)
 	}
