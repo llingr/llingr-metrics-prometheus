@@ -1,9 +1,8 @@
 # llingr-metrics-prometheus
 
-[![CI](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/ci.yml/badge.svg)](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/ci.yml)
+[![Pipeline](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/pipeline.yml/badge.svg)](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/pipeline.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/llingr/llingr-metrics-prometheus.svg)](https://pkg.go.dev/github.com/llingr/llingr-metrics-prometheus)
-[![Lint](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/lint.yml/badge.svg)](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/lint.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/llingr/llingr-metrics-prometheus/actions/workflows/pipeline.yml)
 [![Tag](https://img.shields.io/github/v/tag/llingr/llingr-metrics-prometheus)](https://github.com/llingr/llingr-metrics-prometheus/tags)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/llingr/llingr-metrics-prometheus)](go.mod)
