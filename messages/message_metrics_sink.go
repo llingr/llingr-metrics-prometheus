@@ -8,6 +8,7 @@ package messages
 import (
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/llingr/llingr-nexus/nexus"
@@ -35,6 +36,85 @@ type Sink struct {
 	processDuration    *prometheus.HistogramVec
 	deadLetterDuration *prometheus.HistogramVec
 	queueWaitDuration  *prometheus.HistogramVec
+
+	// the metrics recorded for every message, resolved once per set of label values; the
+	// histograms only on their first observation, so one that is never observed is never
+	// exported
+	seriesMu          sync.RWMutex
+	series            map[seriesKey]*series
+	processDurationBy map[seriesKey]prometheus.Observer
+	queueWaitBy       map[seriesKey]prometheus.Observer
+}
+
+// seriesKey is one set of label values. A struct of strings is looked up in a map without
+// allocating, where a prometheus.Labels map would be built and hashed for every message.
+type seriesKey struct {
+	topic, consumerGroup, service, team string
+	partition                           int32
+}
+
+// series holds the children recorded for every message. The rarer ones (errors, panics,
+// dead letters, duplicates, overflow) are still resolved when they happen, so a series that
+// never occurs is never exported, as before.
+type series struct {
+	processed     prometheus.Counter
+	queueDepth    prometheus.Gauge
+	currentOffset prometheus.Gauge
+}
+
+func (k seriesKey) labels() prometheus.Labels {
+	return prometheus.Labels{
+		"topic":          k.topic,
+		"consumer_group": k.consumerGroup,
+		"service":        k.service,
+		"team":           k.team,
+		"partition":      strconv.FormatInt(int64(k.partition), 10),
+	}
+}
+
+func (s *Sink) seriesFor(key seriesKey) *series {
+	s.seriesMu.RLock()
+	sr := s.series[key]
+	s.seriesMu.RUnlock()
+	if sr != nil {
+		return sr
+	}
+
+	labels := key.labels()
+	sr = &series{
+		processed:     s.messagesProcessed.With(labels),
+		queueDepth:    s.queueDepth.With(labels),
+		currentOffset: s.currentOffset.With(labels),
+	}
+	s.seriesMu.Lock()
+	if existing := s.series[key]; existing != nil {
+		sr = existing
+	} else {
+		s.series[key] = sr
+	}
+	s.seriesMu.Unlock()
+	return sr
+}
+
+// observerFor returns vec's child for key from cache, resolving it on first use.
+func (s *Sink) observerFor(cache map[seriesKey]prometheus.Observer, vec *prometheus.HistogramVec,
+	key seriesKey) prometheus.Observer {
+	s.seriesMu.RLock()
+	o := cache[key]
+	s.seriesMu.RUnlock()
+	if o != nil {
+		return o
+	}
+
+	o = vec.With(key.labels())
+	s.seriesMu.Lock()
+	if existing := cache[key]; existing != nil {
+		o = existing
+	} else {
+		cache[key] = o
+	}
+	s.seriesMu.Unlock()
+	return o
 }
 
 // New creates a new Prometheus metrics sink with its own registry.
@@ -42,7 +122,12 @@ type Sink struct {
 // See options.go for available Option constructors.
 func New(opts ...Option) *Sink {
 	o := processOptions(opts...)
-	s := &Sink{registry: prometheus.NewRegistry()}
+	s := &Sink{
+		registry:          prometheus.NewRegistry(),
+		series:            make(map[seriesKey]*series),
+		processDurationBy: make(map[seriesKey]prometheus.Observer),
+		queueWaitBy:       make(map[seriesKey]prometheus.Observer),
+	}
 
 	labels := []string{"topic", "consumer_group", "service", "team", "partition"}
 
@@ -189,53 +274,54 @@ func serviceLabels(service *nexus.Service) (svc, team string) {
 // MetricsSink returns a nexus.MetricsSink function that records metrics to Prometheus.
 func (s *Sink) MetricsSink() nexus.MetricsSink {
 	return func(ctx nexus.SinkContext, metrics nexus.Metrics) error {
-		partition := strconv.FormatInt(int64(metrics.Partition), 10)
 		svc, team := serviceLabels(ctx.Service)
-		labels := prometheus.Labels{
-			"topic":          ctx.TopicName,
-			"consumer_group": ctx.ConsumerGroup,
-			"service":        svc,
-			"team":           team,
-			"partition":      partition,
+		key := seriesKey{
+			topic:         ctx.TopicName,
+			consumerGroup: ctx.ConsumerGroup,
+			service:       svc,
+			team:          team,
+			partition:     metrics.Partition,
 		}
+		sr := s.seriesFor(key)
 
 		// always increment processed counter
-		s.messagesProcessed.With(labels).Inc()
+		sr.processed.Inc()
 
 		// increment trait-based counters
 		if metrics.Traits&nexus.ProcessError != 0 {
-			s.messagesErrored.With(labels).Inc()
+			s.messagesErrored.With(key.labels()).Inc()
 		}
 		if metrics.Traits&nexus.ProcessPanic != 0 {
-			s.messagesPanicked.With(labels).Inc()
+			s.messagesPanicked.With(key.labels()).Inc()
 		}
 		if metrics.Traits&nexus.DeadLetter != 0 {
-			s.messagesDeadLetter.With(labels).Inc()
+			s.messagesDeadLetter.With(key.labels()).Inc()
 		}
 		if metrics.Traits&nexus.Duplicate != 0 {
-			s.messagesDuplicate.With(labels).Inc()
+			s.messagesDuplicate.With(key.labels()).Inc()
 		}
 		if metrics.Traits&nexus.UsedOverflow != 0 {
-			s.messagesOverflow.With(labels).Inc()
+			s.messagesOverflow.With(key.labels()).Inc()
 		}
 
 		// update gauges
-		s.queueDepth.With(labels).Set(float64(metrics.QueueDepth))
-		s.currentOffset.With(labels).Set(float64(metrics.Offset))
+		sr.queueDepth.Set(float64(metrics.QueueDepth))
+		sr.currentOffset.Set(float64(metrics.Offset))
 
 		// record durations as histograms
 		if metrics.ProcessDuration > 0 {
-			s.processDuration.With(labels).Observe(metrics.ProcessDuration.Seconds())
+			s.observerFor(s.processDurationBy, s.processDuration, key).
+				Observe(metrics.ProcessDuration.Seconds())
 		}
 		if metrics.WriteDeadLetterDuration > 0 {
-			s.deadLetterDuration.With(labels).Observe(metrics.WriteDeadLetterDuration.Seconds())
+			s.deadLetterDuration.With(key.labels()).Observe(metrics.WriteDeadLetterDuration.Seconds())
 		}
 
 		// queue wait = time from read to process start
 		if !metrics.ReadTime.IsZero() && !metrics.ProcessStartTime.IsZero() {
 			queueWait := metrics.ProcessStartTime.Sub(metrics.ReadTime)
 			if queueWait > 0 {
-				s.queueWaitDuration.With(labels).Observe(queueWait.Seconds())
+				s.observerFor(s.queueWaitBy, s.queueWaitDuration, key).Observe(queueWait.Seconds())
 			}
 		}
 

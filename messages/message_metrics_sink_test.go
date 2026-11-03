@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -110,6 +112,60 @@ func TestMetricsSink_ProcessedPerPartition(t *testing.T) {
 	}
 	if p5 != 1 {
 		t.Errorf("partition 5 processed: got %v, want 1", p5)
+	}
+}
+
+// The sink runs once per message, so recording a message whose labels have been seen
+// before must not allocate: a label map per message was a measurable share of a
+// consumer's garbage collection.
+func TestMetricsSink_RecordingSeenLabelsAllocatesNothing(t *testing.T) {
+	s := New()
+	sink := s.MetricsSink()
+	readTime := time.Now()
+	metrics := nexus.Metrics{
+		Partition:        3,
+		Offset:           42,
+		QueueDepth:       7,
+		ProcessDuration:  2 * time.Millisecond,
+		ReadTime:         readTime,
+		ProcessStartTime: readTime.Add(time.Millisecond),
+	}
+	_ = sink(testCtx, metrics) // first sight of these labels resolves their series
+
+	allocs := testing.AllocsPerRun(100, func() {
+		_ = sink(testCtx, metrics)
+	})
+
+	if allocs != 0 {
+		t.Errorf("allocations per recorded message = %.1f, want 0", allocs)
+	}
+}
+
+// Messages recorded from many goroutines at once, as several consumers sharing a sink
+// do, are all counted against the right partition.
+func TestMetricsSink_ConcurrentRecording(t *testing.T) {
+	const goroutines, perGoroutine, partitions = 8, 500, 4
+	s := New()
+	sink := s.MetricsSink()
+
+	var wg sync.WaitGroup
+	for g := range goroutines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range perGoroutine {
+				partition := int32((g + i) % partitions)
+				_ = sink(testCtx, nexus.Metrics{Partition: partition, ProcessDuration: time.Millisecond})
+			}
+		}()
+	}
+	wg.Wait()
+
+	for p := range partitions {
+		got := testutil.ToFloat64(s.messagesProcessed.With(testLabels(strconv.Itoa(p))))
+		if want := float64(goroutines * perGoroutine / partitions); got != want {
+			t.Errorf("partition %d processed: got %v, want %v", p, got, want)
+		}
 	}
 }
 
